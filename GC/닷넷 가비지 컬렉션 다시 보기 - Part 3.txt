@@ -1,0 +1,19 @@
+http://www.simpleisbest.net/post/2011/04/11/Large-Object-Heap-Intro.aspx
+
+LOH에 대해 이미 어느 정도 알고 계신 분들은 MSDN Magazine에서 (http://msdn.microsoft.com/en-us/magazine/cc534993.aspx)를 읽어 보시길 권장합니다
+
+
+LOH (Large Object Heap)
+
+LOH라 불리는 힙은 85,000 바이트 이상 상대적으로 커다란 객체가 할당되는 관리되는 힙(managed heap)의 한 부분이다. 
+CLR(Common Language Runtime)은 힙을 크게 두 부분(SOH, LOH)으로 나누어 별도로 관리한다.
+SOH는 Gen 0, Gen 1, Gen 2 힙을 말하는 것으로 85,000 바이트 이하의 객체들이 할당되고 나이를 먹다가 죽어가는 곳이다. 
+
+먼저 LOH에 할당되는 객체들은 83KB 보다 큰 객체들이다. 
+여기서 우리가 주의할 것은 단일 객체의 크기가 83KB 보다 큰 경우에만 LOH에 객체가 할당된다는 것이다.
+예를 들어 다음 MyObject 클래스의 인스턴스는 LOH에 할당되지 않는다.
+class MyObject
+{
+    private byte[] Data1 = new byte[32*1024];    // 32KB array
+    private byte[] Data2 = new byte[92*1024];    // 92KB array
+}
