@@ -1,0 +1,36 @@
+http://www.simpleisbest.net/post/2011/04/25/Garbage-Collection-Modes.aspx
+
+Garbage Collection Modes
+CLR(Common Language Runtime)은 메모리 관리를 위해 다양한 최적화 기법을 사용한다.
+세대별 가비지 컬렉션이 그들 중 하나이며 오늘 설명할 가비지 컬렉션 모드도 그러한 최적화 기법 중 하나이고 다음 포스트 정도에서 설명할 관리되는 힙의 구조 역시 마찬가지이다.
+
+가비지 컬렉션이 어떤 스레드에 의해 수행되는 가와 가비지 컬렉션이 수행되는 동안 CLR에 의해 관리되는 스레드(닷넷 어플리케이션이 사용하는 스레드들)들의 중단(suspend) 여부에 따라서 Workstation-GC, Server-GC 모드로 나누어 볼 수 있으며 Workstation-GC 모드는 다시 Non-Concurrent-GC 모드와 Concurrent-GC 모드로 나누어 볼 수 있다. 
+닷넷 프레임워크 4.0에 새로이 추가된 Background-GC 모드는 기존의 Concurrent-GC 모드를 대체하는 가비지 컬렉션 모드이다.
+ 1. Workstation-GC
+ 2. Server-GC
+ 3. Non-Concurrent-GC
+ 4. Background-GC
+
+가비지 컬렉션의 기본 동작 방식에서 살펴 본 바 대로 가비지 컬렉션이 수행되면 관리되는 힙은 변화가 된다. 
+가비지 컬렉션이 수행되는 동안 살아 남은 객체들은 컴팩션에 의해 메모리 상의 위치가 바뀌게 되고 이들 객체를 참조하는 로컬 변수, 정적 멤버, 그리고 객체 멤버의 참조 값 역시 바뀔 수도 있다. 
+이렇게 참조 값들이 변화되는 도중에 어플리케이션이 새로운 메모리를 할당(객체 생성)하거나 참조하는 작업을 수행하게 되면 어플리케이션은 엉망진창이 될 것이며 잘못된 참조로 인해 어플리케이션이 죽을 수도 있다. 
+이런 이유에서 가비지 컬렉션이 수행되는 동안 어플리케이션은 어쩔 수 없이 수행을 중단(suspend)해야 하며 CLR은 가비지 컬렉션을 시작하기 전 닷넷 스레드들을 중단한다(CLR에 의해 관리되지 않는 스레드들은 중단되지 않는다).
+
+Workstation-GC 모드와 Server-GC 모드는 얼마 동안 닷넷 스레드들이 중단되며 가비지 컬렉션을 수행하는 주체가 어떤 스레드인가에서 차이가 난다. 
+Workstation-GC 모드는 Concurrent-GC 활성화 여부에 따라서 약간 달라지지만 일반적으로 가비지 컬렉션을 유발한 스레드가 가비지 컬렉션을 수행하게 된다. 
+반면 Server-GC는 가비지 컬렉션을 위한 별도의 스레드를 생성하고 이 스레드가 가비지 컬렉션을 수행한다. 
+또, Workstation-GC는 Concurrent-GC가 활성화 되어 있다면, 아주 잠시 동안만 (그러나 자주) 어플리케이션의 스레드들을 중단하는 반면 Server-GC는 가비지 컬렉션을 수행하는 동안 내내 어플리케이션의 스레드들이 중단되며 가비지 컬렉션이 완전히 끝나면 어플리케이션의 스레드들은 수행을 다시 재개(resume)할 것이다.
+
+특별히 아무런 설정도 하지 않았을 때에는 서버 운영체제에서도 Workstation-GC 모드가 기본적으로 사용된다. 
+Server-GC 모드를 사용하고자 할 때에는 구성 파일(configuration file)의 <runtime> 섹션에서 <gcServer>요소의 enabled 속성을 true로 설정하면 된다.
+
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+  <runtime>
+    <gcServer enabled="true" />
+  </runtime>
+</configuration>
+
+ASP.NET이나 SQL Server와 같이 CLR을 호스팅하는 프로세스는 구성 파일과 무관하게 CLR Hosting API를 통해 가비지 컬렉션 모드를 지정할 수도 있다. 
+이들은 기본적으로 Server-GC 모드를 사용하며 설정을 통해 Server-GC 모드를 사용하지 않도록 해야만 한다.
+
